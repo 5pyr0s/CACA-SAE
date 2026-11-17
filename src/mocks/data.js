@@ -1,0 +1,121 @@
+export const CATEGORIES = [
+  "electronics",
+  "books",
+  "clothing",
+  "accessories",
+  "keys_ids",
+  "bikes_gear",
+  "other",
+];
+
+export function toDate(val) {
+  if (!val) return new Date(0);
+  if (typeof val.toDate === "function") return val.toDate();
+  return new Date(val);
+}
+
+const now = Date.now();
+const hour = 3600 * 1000;
+
+export const MOCK_LISTINGS = [
+  {
+    id: "lst_1",
+    sellerId: "user_alex",
+    sellerName: "Alex Bărbatu",
+    type: "fixed",
+    title: "Texas Instruments TI-84 Plus Calculator",
+    description: "Barely used scientific graphing calculator, includes USB cable and cover. Great for analysis exams.",
+    category: "electronics",
+    price: 220,
+    photoPaths: ["https://images.unsplash.com/photo-1587145820266-a5951ee6f620?auto=format&fit=crop&w=600&q=80"],
+    status: "active",
+    searchKeywords: ["texas", "instruments", "ti84", "plus", "calculator", "electronics"],
+    boostedUntil: new Date(now + 12 * hour).toISOString(),
+    flagCount: 0,
+    createdAt: new Date(now - 5 * hour).toISOString(),
+    auction: null,
+  },
+  {
+    id: "lst_2",
+    sellerId: "user_emanuel",
+    sellerName: "Emanuel Magu",
+    type: "auction",
+    title: "Sony WH-1000XM4 Noise Cancelling Headphones",
+    description: "Good condition, pads replaced last month. Bidding starts at 300 tokens!",
+    category: "electronics",
+    price: 0,
+    photoPaths: ["https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&w=600&q=80"],
+    status: "active",
+    searchKeywords: ["sony", "wh1000xm4", "noise", "cancelling", "headphones"],
+    boostedUntil: new Date(0).toISOString(),
+    flagCount: 0,
+    createdAt: new Date(now - 2 * hour).toISOString(),
+    auction: {
+      startPrice: 300,
+      minIncrement: 20,
+      endsAt: new Date(now + 4 * hour).toISOString(),
+      highestBid: 340,
+      highestBidderId: "user_spiridon",
+      status: "open",
+      winnerId: null,
+    },
+  },
+  {
+    id: "lst_3",
+    sellerId: "user_spiridon",
+    sellerName: "Spiridon Pop-Pavalean",
+    type: "swap",
+    title: "Computer Networks (Tanenbaum 5th Ed.)",
+    description: "Looking to swap for Operating Systems Concepts (Silberschatz) or sell.",
+    category: "books",
+    price: 85,
+    photoPaths: ["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80"],
+    status: "active",
+    searchKeywords: ["computer", "networks", "tanenbaum", "books"],
+    boostedUntil: new Date(0).toISOString(),
+    flagCount: 0,
+    createdAt: new Date(now - 24 * hour).toISOString(),
+    auction: null,
+  },
+];
+
+export const MOCK_REPORTS = [
+  {
+    id: "rep_1",
+    ownerId: "user_alex",
+    ownerName: "Alex Bărbatu",
+    kind: "lost",
+    category: "keys_ids",
+    title: "Lost Black Leather Keychain + UPT Dorm Key",
+    description: "Dropped somewhere between Electro building (Bd. Vasile Pârvan) and Complexul Studențesc.",
+    eventDate: new Date(now - 3 * hour).toISOString(),
+    lat: 45.7473,
+    lng: 21.2263,
+    geohash: "u21z7p",
+    photoPaths: ["https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&w=600&q=80"],
+    status: "open",
+    bounty: 50,
+    bountyStatus: "locked",
+    flagCount: 0,
+    createdAt: new Date(now - 3 * hour).toISOString(),
+  },
+  {
+    id: "rep_2",
+    ownerId: "user_emanuel",
+    ownerName: "Emanuel Magu",
+    kind: "found",
+    category: "electronics",
+    title: "Found White AirPods Pro Case near UPT Library",
+    description: "Found on the bench outside the UPT Central Library entrance. Claim with serial number or sticker description.",
+    eventDate: new Date(now - 1 * hour).toISOString(),
+    lat: 45.7485,
+    lng: 21.2251,
+    geohash: "u21z7r",
+    photoPaths: ["https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80"],
+    status: "open",
+    bounty: 0,
+    bountyStatus: "none",
+    flagCount: 0,
+    createdAt: new Date(now - 1 * hour).toISOString(),
+  },
+];
