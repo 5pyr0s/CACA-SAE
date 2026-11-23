@@ -5,6 +5,11 @@ import ListingDetailPage from "../features/marketplace/ListingDetailPage";
 import NewListingPage from "../features/marketplace/NewListingPage";
 import LostFoundMapPage from "../features/map/LostFoundMapPage";
 import NewReportPage from "../features/lostfound/NewReportPage";
+import LoginPage from "../features/auth/LoginPage";
+import RegisterPage from "../features/auth/RegisterPage";
+import ForgotPasswordPage from "../features/auth/ForgotPasswordPage";
+import { RequireAdmin, RequireAuth } from "../features/auth/RequireAuth";
+import MyOffersPage from "../features/offers/MyOffersPage";
 
 function PlaceholderScreen({ title, owner }) {
   return (
@@ -20,20 +25,28 @@ export default function AppRoutes() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
+          {/* Public */}
           <Route path="/" element={<FeedPage />} />
-          <Route path="/listings/new" element={<NewListingPage />} />
           <Route path="/listings/:id" element={<ListingDetailPage />} />
           <Route path="/map" element={<LostFoundMapPage />} />
-          <Route path="/reports/new" element={<NewReportPage />} />
-
-          <Route path="/login" element={<PlaceholderScreen title="Login" owner="Student B" />} />
-          <Route path="/register" element={<PlaceholderScreen title="Register" owner="Student B" />} />
-          <Route path="/offers" element={<PlaceholderScreen title="My Offers & Reservations" owner="Student B" />} />
-
-          <Route path="/chat" element={<PlaceholderScreen title="Real-Time Chat" owner="Student C" />} />
-          <Route path="/wallet" element={<PlaceholderScreen title="Token Wallet & Ledger" owner="Student C" />} />
           <Route path="/profile/:uid?" element={<PlaceholderScreen title="User Profile" owner="Student A / C" />} />
-          <Route path="/admin" element={<PlaceholderScreen title="Admin Moderation Queue" owner="Student C" />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+          {/* Signed-in students only */}
+          <Route element={<RequireAuth />}>
+            <Route path="/listings/new" element={<NewListingPage />} />
+            <Route path="/reports/new" element={<NewReportPage />} />
+            <Route path="/offers" element={<MyOffersPage />} />
+            <Route path="/chat" element={<PlaceholderScreen title="Real-Time Chat" owner="Student C" />} />
+            <Route path="/wallet" element={<PlaceholderScreen title="Token Wallet & Ledger" owner="Student C" />} />
+          </Route>
+
+          {/* Admin custom claim only */}
+          <Route element={<RequireAdmin />}>
+            <Route path="/admin" element={<PlaceholderScreen title="Admin Moderation Queue" owner="Student C" />} />
+          </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

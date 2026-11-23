@@ -153,6 +153,43 @@ stateDiagram-v2
     }
 ```
 
+### 4.4 Offer, Reservation & Auction State Machines (Student B)
+A transition is only legal from the expected state. Every server handler re-reads the state inside its transaction, so a double-click on Accept or two sweeper runs at once change nothing the second time.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> pending : Buyer sends offer (UC-B1)
+    pending --> accepted : Seller accepts (UC-B2)
+    pending --> rejected : Seller rejects, optional reason
+    pending --> rejected : Another offer on the listing accepted
+    accepted --> [*]
+    rejected --> [*]
+```
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> active : Buyer reserves (fixed price only, max 2 active, 24h)
+    active --> completed : Seller completes the deal
+    active --> cancelled : Buyer cancels
+    active --> expired : Sweeper, expiresAt passed
+    completed --> [*]
+    cancelled --> [*]
+    expired --> [*]
+```
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> open : Seller publishes auction
+    open --> open : Valid bid: BID_LOCK new, BID_UNLOCK previous, +2 min if in the last 2 min
+    open --> closed : Sweeper after endsAt, with bids (AUCTION_PAY / AUCTION_EARN, chat opens)
+    open --> relisted : Sweeper after endsAt, no bids
+    closed --> [*]
+    relisted --> [*]
+```
+
 ---
 
 ## 5. Frozen Data Contracts
@@ -187,6 +224,45 @@ stateDiagram-v2
 * `bounty`: `number` (tokens)
 * `bountyStatus`: `"none" | "locked" | "paid"`
 
+### `useAuth()` (Owner: Student B)
+Wrap nothing yourself: `<AuthProvider>` is already around the whole app in `App.jsx`.
+```js
+import { useAuth } from "../../hooks/useAuth";
+const { user, profile, isAdmin, loading, refreshClaims } = useAuth();
+```
+* `loading`: `true` until Firebase reports the first auth state. Show a spinner, never redirect, while it's `true`.
+* `user`: Firebase Auth user (`uid`, `email`, `emailVerified`, `displayName`, `photoURL`) or `null`.
+* `profile`: live `users/{uid}` document or `null`. It can be `null` for a moment right after signup, so fall back to `user.displayName`.
+* `isAdmin`: `true` when the login token has the `admin` custom claim (set with C's `scripts/set-claim.mjs`; the user must sign out and in again).
+* Route guards: put protected routes inside `<Route element={<RequireAuth />}>`, admin routes inside `<Route element={<RequireAdmin />}>` (see `src/app/routes.jsx`).
+
+### `users/{uid}` (Created by: Student B · Edited by: Student A · Ratings: Student C)
+* `username`: `string | null` (lowercase, unique via `usernames/{username}`; `null` for Google signups)
+* `displayName`: `string` (1–60 chars)
+* `photoURL`: `string | null`
+* `faculty`: `string | null`
+* `bio`: `string` (max 300)
+* `ratingAvg`, `ratingCount`: `number` (start at `0`; only server code changes them)
+* `createdAt`: `Timestamp`
+* No email (stays in Firebase Auth) and no `role` (the admin flag is a custom claim). Creating this document is the signal for C's welcome-email and wallet trigger.
+
+### `usernames/{username}` (Owner: Student B)
+* `uid`: `string`. Written once, in the same transaction as `users/{uid}`; never updated or deleted.
+
+### `offers/{id}` (Owner: Student B, proposed)
+* `listingId`, `sellerId`, `buyerId`: `string`
+* `listingTitle`, `sellerName`, `buyerName`: `string` (copied for list screens)
+* `kind`: `"price" | "swap"`
+* `amount`: `number | null` (RON, price offers) · `swapListingId`, `swapListingTitle`: `string | null` (swap offers)
+* `message`: `string` (max 500)
+* `status`: `"pending" | "accepted" | "rejected"` · `rejectReason`: `string | null`
+* `createdAt`: `Timestamp`
+
+### `reservations/{id}` (Owner: Student B, proposed; browser can only read its own)
+* `listingId`, `listingTitle`, `sellerId`, `sellerName`, `buyerId`: `string`
+* `status`: `"active" | "completed" | "expired" | "cancelled"`
+* `expiresAt`, `createdAt`: `Timestamp`
+
 ---
 
 ## 6. Getting Started (All Teammates)
@@ -203,6 +279,20 @@ cd SSD_Project
 cp .env.example .env.local   # Fill in VITE_FIREBASE_* keys from shared vault
 npm ci
 npm run dev                  # Opens http://localhost:5173
+```
+
+### Run against the Firebase emulators
+Sign-up, login and profile documents need the Auth and Firestore emulators (or the real project).
+```bash
+echo "VITE_USE_EMULATORS=true" >> .env.local   # leave VITE_FIREBASE_PROJECT_ID empty → "demo-caca"
+npm run emulators            # Auth :9099, Firestore :8080, Emulator UI :4000
+npm run dev                  # second terminal
+```
+If you fill `VITE_FIREBASE_PROJECT_ID` with the real project ID, start the emulators with `--project <that id>` instead, so the browser and emulators agree.
+
+### Security rules tests
+```bash
+npm run test:rules           # starts the Firestore emulator, runs tests/rules/*.test.js
 ```
 
 ### Pre-PR Checks (Must pass before merging to `main`)
