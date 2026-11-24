@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { getListingById, markListingSold } from "../../services/listings";
 import { toDate } from "../../mocks/data";
+import ListingActions from "../offers/ListingActions";
 
 export default function ListingDetailPage() {
   const { id } = useParams();
@@ -94,44 +95,7 @@ export default function ListingDetailPage() {
             id="student-b-action-slot"
             className="bg-white p-5 rounded-xl border border-slate-200 space-y-4"
           >
-            {listing.type === "auction" ? (
-              <>
-                <div className="text-xs font-semibold uppercase text-amber-700">
-                  Live Token Auction (Student B Slot)
-                </div>
-                <div className="text-2xl font-bold">
-                  {listing.auction?.highestBid || listing.auction?.startPrice} Tokens
-                </div>
-                <p className="text-xs text-slate-500">
-                  Min increment: {listing.auction?.minIncrement} Tokens
-                </p>
-                <button
-                  type="button"
-                  className="w-full py-2.5 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700"
-                >
-                  Place Bid (Token Escrow)
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="text-xs font-semibold uppercase text-slate-500">
-                  Fixed / Swap Actions (Student B Slot)
-                </div>
-                <div className="text-2xl font-bold">{listing.price} RON</div>
-                <button
-                  type="button"
-                  className="w-full py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
-                >
-                  Make Offer
-                </button>
-                <button
-                  type="button"
-                  className="w-full py-2.5 rounded-lg border border-slate-300 text-slate-800 text-sm font-semibold hover:bg-slate-50"
-                >
-                  Reserve for 24h
-                </button>
-              </>
-            )}
+            <ListingActions listing={listing} />
           </div>
 
           <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">

@@ -1,6 +1,9 @@
 import { Link, NavLink, Outlet } from "react-router";
+import { useAuth } from "../hooks/useAuth";
+import { AccountMenu, VerifyEmailBanner } from "../features/auth/AccountMenu";
 
 export default function Layout() {
+  const { isAdmin } = useAuth();
   const navClass = ({ isActive }) =>
     `px-3 py-1.5 rounded-md text-sm font-medium transition ${
       isActive ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-100"
@@ -19,7 +22,7 @@ export default function Layout() {
               <NavLink to="/map" className={navClass}>Lost &amp; Found Map</NavLink>
               <NavLink to="/offers" className={navClass}>My Offers</NavLink>
               <NavLink to="/chat" className={navClass}>Chat</NavLink>
-              <NavLink to="/admin" className={navClass}>Admin</NavLink>
+              {isAdmin && <NavLink to="/admin" className={navClass}>Admin</NavLink>}
             </nav>
           </div>
 
@@ -43,15 +46,11 @@ export default function Layout() {
             >
               + Report Lost/Found
             </Link>
-            <Link to="/profile" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Profile
-            </Link>
-            <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Sign In
-            </Link>
+            <AccountMenu />
           </div>
         </div>
       </header>
+      <VerifyEmailBanner />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
         <Outlet />
