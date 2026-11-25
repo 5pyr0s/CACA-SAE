@@ -3,8 +3,15 @@ import { Link } from "react-router";
 import { subscribeListings } from "../../services/listings";
 import { CATEGORIES, toDate } from "../../mocks/data";
 
+function parseDate(val) {
+  if (!val) return new Date(0);
+  if (typeof val.toDate === "function") return val.toDate();
+  return toDate(val);
+}
+
 export default function FeedPage() {
   const [listings, setListings] = useState([]);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [type, setType] = useState("all");
@@ -12,9 +19,11 @@ export default function FeedPage() {
   const [maxPrice, setMaxPrice] = useState("");
 
   useEffect(() => {
+    setError("");
     const unsubscribe = subscribeListings(
       { search, category, type, minPrice, maxPrice },
-      (items) => setListings(items)
+      (items) => setListings(items),
+      (err) => setError(err.message || "Failed to load listings.")
     );
     return unsubscribe;
   }, [search, category, type, minPrice, maxPrice]);
@@ -80,6 +89,12 @@ export default function FeedPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+          {error}
+        </div>
+      )}
+
       {listings.length === 0 ? (
         <div className="bg-white p-12 rounded-xl border border-slate-200 text-center text-slate-500">
           No active listings match your filters.
@@ -87,7 +102,8 @@ export default function FeedPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {listings.map((item) => {
-            const isBoosted = toDate(item.boostedUntil) > new Date();
+            const isBoosted = parseDate(item.boostedUntil) > new Date();
+            const thumbnail = item.photoUrls?.[0] || item.photoPaths?.[0] || "";
             return (
               <Link
                 key={item.id}
@@ -97,11 +113,17 @@ export default function FeedPage() {
                 }`}
               >
                 <div className="relative h-48 bg-slate-100">
-                  <img
-                    src={item.photoPaths?.[0]}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
+                  {thumbnail ? (
+                    <img
+                      src={thumbnail}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
+                      No photo
+                    </div>
+                  )}
                   <div className="absolute top-2 left-2 flex gap-1.5">
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase bg-slate-900/80 text-white">
                       {item.type}
@@ -116,7 +138,7 @@ export default function FeedPage() {
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div>
                     <span className="text-xs font-medium text-indigo-600 uppercase">
-                      {item.category.replace("_", " ")}
+                      {item.category?.replace("_", " ")}
                     </span>
                     <h2 className="font-semibold text-slate-900 group-hover:text-indigo-600 line-clamp-1">
                       {item.title}

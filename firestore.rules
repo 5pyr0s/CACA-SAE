@@ -59,5 +59,28 @@ service cloud.firestore {
         && getAfter(doc('users/' + request.auth.uid)).data.username == name;
       allow update, delete: if false;
     }
+   
+    // ── listings/{listingId} ─ Marketplace items (Student A) ──
+    match /listings/{listingId} {
+      allow read: if true;
+
+      allow create: if isUser(request.resource.data.sellerId)
+        && request.resource.data.status == 'active'
+        && request.resource.data.flagCount == 0
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 1
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.price is number
+        && request.resource.data.price >= 0;
+
+      // UC-A2: seller can edit whitelisted fields or mark as sold (never flagCount/boostedUntil)
+      allow update: if isUser(resource.data.sellerId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['title', 'description', 'category', 'price', 'searchKeywords', 'status'])
+        && (request.resource.data.status == resource.data.status
+            || request.resource.data.status == 'sold');
+
+      allow delete: if isUser(resource.data.sellerId) || isAdmin();
+    }
   }
 }
