@@ -18,11 +18,13 @@ export default function FeedPage() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
-  useEffect(() => {
-    setError("");
+useEffect(() => {
     const unsubscribe = subscribeListings(
       { search, category, type, minPrice, maxPrice },
-      (items) => setListings(items),
+      (items) => {
+        setError("");
+        setListings(items);
+      },
       (err) => setError(err.message || "Failed to load listings.")
     );
     return unsubscribe;
