@@ -3,6 +3,9 @@ import { useNavigate } from "react-router";
 import { createListing } from "../../services/listings";
 import { CATEGORIES } from "../../mocks/data";
 
+// Temporary fallback until useAuth() is merged
+const TEMP_USER = { uid: "user_alex", displayName: "Alex Barbatu" };
+
 export default function NewListingPage() {
   const navigate = useNavigate();
   const [type, setType] = useState("fixed");
@@ -13,37 +16,53 @@ export default function NewListingPage() {
   const [startPrice, setStartPrice] = useState("50");
   const [minIncrement, setMinIncrement] = useState("10");
   const [durationHours, setDurationHours] = useState("24");
+  const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
+  const [progress, setProgress] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     return () => previews.forEach((url) => URL.revokeObjectURL(url));
   }, [previews]);
 
   const handlePhotoChange = (e) => {
-    const files = Array.from(e.target.files || []).slice(0, 5);
+    const selected = Array.from(e.target.files || []).slice(0, 4);
     previews.forEach((url) => URL.revokeObjectURL(url));
-    setPreviews(files.map((f) => URL.createObjectURL(f)));
+    setFiles(selected);
+    setPreviews(selected.map((f) => URL.createObjectURL(f)));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const created = createListing({
-      type,
-      title,
-      description,
-      category,
-      price,
-      startPrice,
-      minIncrement,
-      durationHours,
-      photoPaths: previews,
-    });
-    navigate(`/listings/${created.id}`);
+    setSubmitting(true);
+    setError("");
+    setProgress(0);
+
+    try {
+      const created = await createListing(
+        { type, title, description, category, price, startPrice, minIncrement, durationHours },
+        TEMP_USER,
+        files,
+        (pct) => setProgress(pct)
+      );
+      navigate(`/listings/${created.id}`);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to publish listing.");
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl border border-slate-200 space-y-6">
       <h1 className="text-2xl font-bold">Post a New Listing</h1>
+
+      {error && (
+        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -53,6 +72,7 @@ export default function NewListingPage() {
               <button
                 key={t}
                 type="button"
+                disabled={submitting}
                 onClick={() => setType(t)}
                 className={`py-2 rounded-lg text-sm font-semibold uppercase border ${
                   type === t
@@ -71,6 +91,7 @@ export default function NewListingPage() {
           <input
             type="text"
             required
+            disabled={submitting}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Raspberry Pi 4 Model B (4GB)"
@@ -82,6 +103,7 @@ export default function NewListingPage() {
           <div>
             <label className="block text-sm font-medium mb-1">Category</label>
             <select
+              disabled={submitting}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
@@ -99,6 +121,7 @@ export default function NewListingPage() {
                 type="number"
                 min="0"
                 required
+                disabled={submitting}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm"
@@ -117,6 +140,7 @@ export default function NewListingPage() {
                 type="number"
                 min="1"
                 required
+                disabled={submitting}
                 value={startPrice}
                 onChange={(e) => setStartPrice(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded border border-amber-300 bg-white text-sm"
@@ -130,6 +154,7 @@ export default function NewListingPage() {
                 type="number"
                 min="1"
                 required
+                disabled={submitting}
                 value={minIncrement}
                 onChange={(e) => setMinIncrement(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded border border-amber-300 bg-white text-sm"
@@ -143,6 +168,7 @@ export default function NewListingPage() {
                 type="number"
                 min="1"
                 required
+                disabled={submitting}
                 value={durationHours}
                 onChange={(e) => setDurationHours(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded border border-amber-300 bg-white text-sm"
@@ -156,6 +182,7 @@ export default function NewListingPage() {
           <textarea
             rows={3}
             required
+            disabled={submitting}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Condition, pickup spot around campus..."
@@ -164,11 +191,12 @@ export default function NewListingPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Photos (1 to 5 images)</label>
+          <label className="block text-sm font-medium mb-1">Photos (1 to 4 images)</label>
           <input
             type="file"
             accept="image/*"
             multiple
+            disabled={submitting}
             onChange={handlePhotoChange}
             className="w-full text-sm text-slate-600"
           />
@@ -186,11 +214,26 @@ export default function NewListingPage() {
           )}
         </div>
 
+        {submitting && files.length > 0 && (
+          <div className="space-y-1">
+            <div className="text-xs text-slate-600 font-medium">
+              Compressing photos: {progress}%
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-indigo-600 h-2 transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <button
           type="submit"
-          className="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700"
+          disabled={submitting}
+          className="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 disabled:opacity-50"
         >
-          Publish Listing
+          {submitting ? "Publishing..." : "Publish Listing"}
         </button>
       </form>
     </div>
